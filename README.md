@@ -20,6 +20,7 @@ D (plazo máximo) se calcula como 7 + 7 x (S mod 4), lo que da 7 días.
 - ICN292-Lab3-Rebolledo-Alex-triage.json: workflow de triage (Parte A, 12 nodos, sin código).
 - ICN292-Lab3-Rebolledo-Alex-emisor.json: workflow que simula el envío de las 15 solicitudes de prueba.
 - ICN292-Lab3-Rebolledo-Alex-resumen.json: workflow programado de resumen diario (Parte B).
+- ICN292-Lab3-Rebolledo-Alex-versioncode.json: workflow con nodos Code para la parte de Bonus.
 
 ## Cómo reproducir cada archivo
 
