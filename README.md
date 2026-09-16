@@ -40,5 +40,3 @@ En la Parte A, las 15 solicitudes más las 3 de control se clasificaron correcta
 En la Parte B, el workflow de resumen se probó manualmente y arma bien el desglose por ruta, el monto total y la tasa de aprobación automática del día.
 
 En la Parte C se documentan los 7 casos pedidos, incluyendo dos hallazgos reales que no se buscaron a propósito: fallas intermitentes de conexión a mindicador.cl, y pérdida ocasional de alguna fila al escribir de forma concurrente en Google Sheets. Ambos quedan con evidencia (capturas) en el informe.
-
-Los archivos de este repositorio no incluyen ninguna credencial, token ni contraseña. Las credenciales de Google Sheets se manejan aparte, en el gestor de credenciales de n8n.
