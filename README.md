@@ -1,7 +1,7 @@
 # ICN292 - Laboratorio 3: Triage automático de devoluciones (AndesHogar SpA)
 
 Autor: Álex Rebolledo Contreras
-RUT (sin dígito verificador): 21.500.500
+RUT: 21.500.500-3
 Fecha: 16 de septiembre de 2026
 Curso: ICN292, Sistemas de Información para la Gestión, Universidad Técnica Federico Santa María
 Repositorio: https://github.com/rebolledocontrerasalex-alt/ICN292-Lab3-Rebolledo-Alex
