@@ -1,0 +1,202 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 20 * * *"
+            }
+          ]
+        }
+      },
+      "id": "9bac1f4e-4a65-433c-89b7-e52a0f547127",
+      "name": "Schedule Trigger - 20:00 diario",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        -176
+      ],
+      "notes": "Frecuencia elegida: todos los dias a las 20:00 (America/Santiago), despues del cierre de atencion, para consolidar lo procesado en la jornada. Ajustable en la UI del nodo."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FRuCMuVxlPUFOK8DDx5z25ECUWN5QRGTEGvJzYbChxA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Registro",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "8e07468e-3c35-4d55-ba57-27a68c4d3b2b",
+      "name": "Google Sheets - Leer Registro",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        512,
+        -176
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "BerYkxsEFdDXZ4zQ",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Mismo Sheet ID que usa el workflow de triage en el nodo Registro."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "f1",
+              "leftValue": "={{ $json.timestamp ? $json.timestamp.substring(0,10) : '' }}",
+              "rightValue": "={{ $now.toFormat('yyyy-LL-dd') }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5adcc2f1-39f0-48e5-a0fa-9b964928249e",
+      "name": "Filter - Solo Hoy",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        -176
+      ],
+      "alwaysOutputData": true,
+      "notes": "alwaysOutputData=true para que, si un dia no hay coincidencias, el flujo igual siga corriendo (con un item vacio) en vez de detenerse en silencio. El Code de mas abajo detecta ese caso vacio y arma el mensaje 'sin solicitudes'."
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "sum",
+              "field": "monto"
+            },
+            {
+              "field": "id_solicitud"
+            }
+          ]
+        },
+        "fieldsToSplitBy": "ruta",
+        "options": {}
+      },
+      "id": "e5d1abac-2a82-4643-922e-d8fc9573def7",
+      "name": "Summarize - Por Ruta",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -176
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const filtradas = $('Filter - Solo Hoy').all().filter(i => i.json && i.json.ruta);\nconst resumen = $input.all().filter(i => i.json && i.json.ruta);\nconst hoy = $now.toFormat('yyyy-LL-dd');\n\nif (filtradas.length === 0) {\n  return [{ json: { mensaje: `Resumen diario AndesHogar (${hoy}): no se registraron solicitudes hoy.` } }];\n}\n\nlet totalMonto = 0;\nlet totalSolicitudes = 0;\nlet aprobadas = 0;\nconst lineas = [];\n\nfor (const item of resumen) {\n  const ruta = item.json.ruta;\n  const cantidad = Number(item.json.count_id_solicitud || 0);\n  const montoRuta = Number(item.json.sum_monto || 0);\n  totalMonto += montoRuta;\n  totalSolicitudes += cantidad;\n  if (ruta === 'APROBACION') aprobadas = cantidad;\n  lineas.push(`${ruta}: ${cantidad} solicitudes, $${montoRuta.toLocaleString('es-CL')}`);\n}\n\nconst tasaAprobacion = totalSolicitudes > 0 ? ((aprobadas / totalSolicitudes) * 100).toFixed(1) : '0.0';\n\nconst mensaje = `Resumen diario AndesHogar (${hoy})\\n` +\n  lineas.join('\\n') +\n  `\\nTotal solicitudes: ${totalSolicitudes}` +\n  `\\nMonto total: $${totalMonto.toLocaleString('es-CL')}` +\n  `\\nTasa de aprobacion automatica: ${tasaAprobacion}%`;\n\nreturn [{ json: { mensaje, totalSolicitudes, totalMonto, tasaAprobacion } }];"
+      },
+      "id": "81a5e5d1-42f5-4e0b-85e9-5ec6a85cae0a",
+      "name": "Code - Componer Mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        -176
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "0568caf9-78b5-43ba-a0b3-e6d5a11f1703",
+      "name": "Enviar Mensaje (NoOp - reemplazar por Slack/Email/Telegram)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        -176
+      ],
+      "notes": "Placeholder para no depender de una credencial externa. Reemplaza este nodo por Slack / Gmail / Telegram apuntando al campo mensaje del nodo anterior."
+    }
+  ],
+  "connections": {
+    "Schedule Trigger - 20:00 diario": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Leer Registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Leer Registro": {
+      "main": [
+        [
+          {
+            "node": "Filter - Solo Hoy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter - Solo Hoy": {
+      "main": [
+        [
+          {
+            "node": "Summarize - Por Ruta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize - Por Ruta": {
+      "main": [
+        [
+          {
+            "node": "Code - Componer Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Componer Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensaje (NoOp - reemplazar por Slack/Email/Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d1cb4873456bb22dc4e7e1a06471acd540055ed0ef456e2b7de498be48917800"
+  }
+}
